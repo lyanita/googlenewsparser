@@ -3,13 +3,12 @@ from newspaper import Article
 from newspaper import Config
 import pandas as pd
 import nltk
-nltk.download('punkt')
 from textblob import TextBlob
 import matplotlib.pyplot as plt
 import streamlit as st
 import time
 import datetime
-from datetime import datetime, date, time
+import base64
 
 #Remember to download the punkt dataset from nltk
 #nltk.download('punkt')
@@ -17,7 +16,7 @@ from datetime import datetime, date, time
 #Remember to run pipreqs /Users/anita/OneDrive/Coding/Python/googlenews-api/ in terminal
 
 #Run App
-#streamlit run twitter-api.py
+#streamlit run googlenews-api.py
 
 user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0) Gecko/20100101 Firefox/78.0'
 #'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
@@ -82,10 +81,12 @@ class GoogleNewsClient(object):
 def main():
     #start = input("Enter a start date in format 'MM/DD/YYYY': ")
     #end = input("Enter an end date in format 'MM/DD/YYYY': ")
-    start = st.sidebar.date_input('Start Date')
-    end = st.sidebar.date_input('End Date')
+    start = datetime.datetime.strptime(str(st.sidebar.date_input('Start Date')),'%Y-%m-%d').strftime('%m/%d/%Y')
+    end = datetime.datetime.strptime(str(st.sidebar.date_input('End Date')),'%Y-%m-%d').strftime('%m/%d/%Y')
+    if start > end:
+        st.sidebar.error("Error: End date must fall after start date")
     #count = int(input("Enter the number of pages to scan: "))
-    count = int(st.sidebar.slider('Enter the number of pages to scan', 1, 10, 5))
+    count = int(st.sidebar.slider('Enter the number of pages to scan', 1, 10, 3))
     #keyword = input("Enter a query: ")
     keyword = st.sidebar.text_input("Enter a keyword", "winter")
     api = GoogleNewsClient(start=start, end=end)
@@ -93,18 +94,22 @@ def main():
     articles = api.get_articles(news)
     sentiment = api.get_sentiment(articles)
     sentiment.to_csv("articles.csv", index=False)
-    print(news)
-    print(articles)
-    news.to_csv("news.csv", index=False)
-    sentiment_group = sentiment.groupby("Media")['Polarity'].mean()
-    print(sentiment_group)
-    sentiment_group.plot.bar(x="Media", y="Mean Polarity")
-    plt.show()
+    #news.to_csv("news.csv", index=False)
+    #sentiment_group = sentiment.groupby("Media")['Polarity'].mean()
+    #print(sentiment_group)
+    #sentiment_group.plot.bar(x="Media", y="Mean Polarity")
+    #plt.show()
 
     st.title('Google News Parser Web App')
     st.subheader("Interested in scraping data from Google News? Use the parameters in the sidebar to continue!")
     st.text("Google News Data")
     #tweet_df = pd.DataFrame(tweets)
+    st.dataframe(articles)
+
+    csv = articles.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download = news_data.csv>Download CSV File</a> (click and save as &lt;filename&gt;.csv)'
+    st.markdown(href, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     #Calling main function
