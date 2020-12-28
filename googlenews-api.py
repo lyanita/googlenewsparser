@@ -3,13 +3,21 @@ from newspaper import Article
 from newspaper import Config
 import pandas as pd
 import nltk
+nltk.download('punkt')
 from textblob import TextBlob
 import matplotlib.pyplot as plt
+import streamlit as st
+import time
+import datetime
+from datetime import datetime, date, time
 
 #Remember to download the punkt dataset from nltk
 #nltk.download('punkt')
 
 #Remember to run pipreqs /Users/anita/OneDrive/Coding/Python/googlenews-api/ in terminal
+
+#Run App
+#streamlit run twitter-api.py
 
 user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0) Gecko/20100101 Firefox/78.0'
 #'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
@@ -72,10 +80,14 @@ class GoogleNewsClient(object):
         return news_df
 
 def main():
-    start = input("Enter a start date in format 'MM/DD/YYYY': ")
-    end = input("Enter an end date in format 'MM/DD/YYYY': ")
-    count = int(input("Enter the number of pages to scan: "))
-    keyword = input("Enter a query: ")
+    #start = input("Enter a start date in format 'MM/DD/YYYY': ")
+    #end = input("Enter an end date in format 'MM/DD/YYYY': ")
+    start = st.sidebar.date_input('Start Date')
+    end = st.sidebar.date_input('End Date')
+    #count = int(input("Enter the number of pages to scan: "))
+    count = int(st.sidebar.slider('Enter the number of pages to scan', 1, 10, 5))
+    #keyword = input("Enter a query: ")
+    keyword = st.sidebar.text_input("Enter a keyword", "winter")
     api = GoogleNewsClient(start=start, end=end)
     news = api.get_news(query=keyword, count=count)
     articles = api.get_articles(news)
@@ -88,6 +100,11 @@ def main():
     print(sentiment_group)
     sentiment_group.plot.bar(x="Media", y="Mean Polarity")
     plt.show()
+
+    st.title('Google News Parser Web App')
+    st.subheader("Interested in scraping data from Google News? Use the parameters in the sidebar to continue!")
+    st.text("Google News Data")
+    #tweet_df = pd.DataFrame(tweets)
 
 if __name__ == "__main__":
     #Calling main function
