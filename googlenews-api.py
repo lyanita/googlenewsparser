@@ -11,7 +11,7 @@ import base64
 import streamlit as st
 
 #Remember to download the punkt dataset from nltk
-#nltk.download('punkt')
+nltk.download('punkt')
 
 #Remember to run pipreqs /Users/anita/OneDrive/Coding/Python/googlenews-api/ in terminal
 
