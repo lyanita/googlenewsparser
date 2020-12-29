@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import time
 import datetime
 import base64
-import streamlit as st
 from wordcloud import WordCloud
+import streamlit as st
 
 #Remember to download the punkt dataset from nltk
 nltk.download('punkt')
