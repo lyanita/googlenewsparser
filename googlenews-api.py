@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import time
 import datetime
 import base64
-from wordcloud import WordCloud
 import streamlit as st
 
 #Remember to download the punkt dataset from nltk
@@ -122,11 +121,11 @@ def main():
     for sublist in keywords:
         for item in sublist:
             wordcloud_list.append(item)
-    wordcloud = WordCloud().generate(" ".join(wordcloud_list))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis("off")
+    #wordcloud = WordCloud().generate(" ".join(wordcloud_list))
+    #plt.imshow(wordcloud, interpolation='bilinear')
+    #plt.axis("off")
     #fig.savefig('wordcloud.png')
-    st.pyplot()
+    #st.pyplot()
 
 if __name__ == "__main__":
     #Calling main function
