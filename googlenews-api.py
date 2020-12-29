@@ -9,6 +9,7 @@ import time
 import datetime
 import base64
 import streamlit as st
+from wordcloud import WordCloud
 
 #Remember to download the punkt dataset from nltk
 nltk.download('punkt')
@@ -58,6 +59,7 @@ class GoogleNewsClient(object):
             except:
                 continue
         news_df = pd.DataFrame(list)
+        news_df["Keywords"] = news_df["Keywords"].str.join(',')
         return news_df
 
     def get_sentiment(self, news_df):
@@ -110,6 +112,21 @@ def main():
     b64 = base64.b64encode(csv.encode()).decode()
     href = f'<a href="data:file/csv;base64,{b64}" download = news_data.csv>Download CSV File</a> (click and save as &lt;filename&gt;.csv)'
     st.markdown(href, unsafe_allow_html=True)
+
+    keyword_list = articles["Keywords"].tolist()
+    keywords = []
+    for string in keyword_list:
+        words = string.split(',')
+        keywords.append(words)
+    wordcloud_list = []
+    for sublist in keywords:
+        for item in sublist:
+            wordcloud_list.append(item)
+    wordcloud = WordCloud().generate(" ".join(wordcloud_list))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    #fig.savefig('wordcloud.png')
+    st.pyplot()
 
 if __name__ == "__main__":
     #Calling main function
