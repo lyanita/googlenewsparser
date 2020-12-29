@@ -82,14 +82,14 @@ class GoogleNewsClient(object):
 def main():
     #start = input("Enter a start date in format 'MM/DD/YYYY': ")
     #end = input("Enter an end date in format 'MM/DD/YYYY': ")
-    start = datetime.datetime.strptime(str(st.sidebar.date_input('Start Date')),'%Y-%m-%d').strftime('%m/%d/%Y')
+    start = datetime.datetime.strptime(str(st.sidebar.date_input('Start Date', datetime.date(2020,1,1))),'%Y-%m-%d').strftime('%m/%d/%Y')
     end = datetime.datetime.strptime(str(st.sidebar.date_input('End Date')),'%Y-%m-%d').strftime('%m/%d/%Y')
     if start > end:
         st.sidebar.error("Error: End date must fall after start date")
     #count = int(input("Enter the number of pages to scan: "))
     count = int(st.sidebar.slider('Enter the number of pages to scan', 1, 10, 3))
     #keyword = input("Enter a query: ")
-    keyword = st.sidebar.text_input("Enter a keyword", "winter")
+    keyword = st.sidebar.text_input("Enter a keyword", "Canada")
     api = GoogleNewsClient(start=start, end=end)
     news = api.get_news(query=keyword, count=count)
     articles = api.get_articles(news)
