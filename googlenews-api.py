@@ -12,6 +12,7 @@ from textblob import TextBlob
 import matplotlib.pyplot as plt
 import time
 import datetime
+import pytz
 import base64
 import altair as alt
 import streamlit as st
@@ -58,32 +59,41 @@ class GoogleNewsClient(object):
                 article.download()
                 article.parse()
                 article.nlp()
-                #dict['Reporting Date'] = news['date'][ind]
-                #dict['Publish Date'] = article.publish_date
+                dict['Reporting Date'] = news['date'][ind]
+                dict['Publish Date'] = article.publish_date
+                local_time = pytz.timezone("US/Eastern")
                 if article.publish_date is None:
                     try:
                         date_format = datetime.datetime.strptime(news['date'][ind], "%b %d, %Y")
-                        dict["Date"] = date_format
+                        local_date = local_time.localize(date_format, is_dst=None)
+                        utc_date = local_date.astimzone(pytz.UTC)
+                        dict["Date"] = utc_date
                     except:
                         current_utc = datetime.datetime.utcnow()
+                        current_utc = current_utc.replace(tzinfo=pytz.utc)
+                        number = [int(s) for s in str.split() if s.isdigit()]
                         if "year" in news['date'][ind] or "years" in news['date'][ind]:
-                            number = int(news['date'][ind][0])
                             delta = dateutil.relativedelta.relativedelta(years=number)
-                            dict["Date"] = current_utc - delta
                         elif "month" in news['date'][ind] or "months" in news['date'][ind]:
-                            number = int(news['date'][ind][0])
                             delta = dateutil.relativedelta.relativedelta(months=number)
-                            dict["Date"] = current_utc - delta
                         elif "week" in news['date'][ind] or "weeks" in news['date'][ind]:
-                            number = int(news['date'][ind][0])
-                            delta = datetime.timedelta(number*7)
-                            dict["Date"] = current_utc - delta
+                            delta = dateutil.relativedelta.relativedelta(weeks=number)
                         elif "day" in news['date'][ind] or "days" in news['date'][ind]:
-                            number = int(news['date'][ind][0])
-                            delta = datetime.timedelta(number)
-                            dict["Date"] = current_utc - delta
+                            #delta = datetime.timedelta(number)
+                            delta = dateutil.relativedelta.relativedelta(days=number)
+                        elif "hour" in news['date'][ind] or "hours" in news['date'][ind]:
+                            delta = dateutil.relativedelta.relativedelta(hours=number)
+                        elif "min" in news['date'][ind] or "mins" in news['date'][ind]:
+                            delta = dateutil.relativedelta.relativedelta(mins=number)
+                        date = current_utc - delta
+                        dict["Date"] = date.astimezone(pytz.UTC)
                 else:
-                    dict['Date'] = article.publish_date
+                    #date_format = datetime.datetime.strptime(article.publish_date, "%Y-%m-%d %H:%M:%S")
+                    #local_date = local_time.localize(date_format, is_dst=None)
+                    #utc_date = local_date.astimzone(pytz.UTC)
+                    date = article.publish_date
+                    date = date.replace(tzinfo=pytz.utc)
+                    dict['Date'] = date
                 dict['Media'] = news['media'][ind]
                 dict['Title'] = article.title
                 dict['Article'] = article.text
@@ -119,10 +129,12 @@ class GoogleNewsClient(object):
 def main():
     #User Inputs
     #start = input("Enter a start date in format 'MM/DD/YYYY': ")
-    start = datetime.datetime.strptime(str(st.sidebar.date_input('Start Date', datetime.date(2020,1,1))),'%Y-%m-%d').strftime('%m/%d/%Y')
+    start_date = datetime.datetime.strptime(str(st.sidebar.date_input('Start Date', datetime.date(2020,1,1))),'%Y-%m-%d')
+    start = start_date.strftime('%m/%d/%Y')
     #end = input("Enter an end date in format 'MM/DD/YYYY': ")
-    end = datetime.datetime.strptime(str(st.sidebar.date_input('End Date')),'%Y-%m-%d').strftime('%m/%d/%Y')
-    if start > end:
+    end_date = datetime.datetime.strptime(str(st.sidebar.date_input('End Date')),'%Y-%m-%d')
+    end = end_date.strftime('%m/%d/%Y')
+    if start_date > end_date:
         st.sidebar.error("Error: End date must fall after start date")
     #count = int(input("Enter the number of pages to scan: "))
     count = int(st.sidebar.slider('Enter the number of pages to scan', 1, 10, 3))
@@ -148,6 +160,9 @@ def main():
     st.text("Google News Data")
 
     st.dataframe(articles)
+    news_count = len(news.index)
+    articles_count = len(articles.index)
+    st.text(str(articles_count) + "/" + str(news_count) + " results displayed (remainder unavailable due to website block requests)")
     csv = articles.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()
     href = f'<a href="data:file/csv;base64,{b64}" download = news_data.csv>Download CSV File</a> (click and save as &lt;filename&gt;.csv)'
@@ -175,7 +190,7 @@ def main():
     unique_words_df["Percent"] = unique_words_df["Count"]/word_count
     unique_words_df["Percent"] = unique_words_df["Percent"].astype(float).map("{:.2%}".format)
     st.text("Keyword Count Data")
-    words_chart = alt.Chart(unique_words_df).mark_bar().encode(x=alt.X("Word", sort="-y"), y=alt.Y("Count")).transform_window(rank='rank(Count)', sort=[alt.SortField("Count", order="descending")]).transform_filter((alt.datum.rank < 10)).properties(width=600, height=300)
+    words_chart = alt.Chart(unique_words_df).mark_bar().encode(x=alt.X("Word", sort="-y"), y=alt.Y("Count"), tooltip=["Word", "Count", "Percent"]).transform_window(rank='rank(Count)', sort=[alt.SortField("Count", order="descending")]).transform_filter((alt.datum.rank < 10)).properties(width=600, height=300).interactive()
 
     col1, col2 = st.beta_columns([4,3])
     with col1:
@@ -183,6 +198,12 @@ def main():
             st.altair_chart(words_chart, use_container_width=True)
     with col2:
         st.dataframe(unique_words_df)
+
+    polarity = alt.Chart(articles).mark_line(point=True).encode(x=alt.X("Date"), y=alt.Y("Polarity"), tooltip=['Date', 'Polarity', 'Media']).interactive()
+    rule = alt.Chart(articles).mark_rule(color="red").encode(y="mean(Polarity)", tooltip=["mean(Polarity)"])
+    polarity_chart = (polarity + rule).properties(width=700, height=300)
+    st.text("Polarity Data")
+    st.altair_chart(polarity_chart)
 
     #Word Cloud
     #wordcloud = WordCloud().generate(" ".join(wordcloud_list))
