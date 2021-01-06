@@ -156,6 +156,8 @@ def main():
     keyword = st.sidebar.text_input("Enter a keyword", "Canada")
     st.sidebar.text("Note: A page has ~10 results")
 
+    time_start = time.time()
+
     #Class Call
     api = GoogleNewsClient(start=start, end=end)
     news = api.get_news(query=keyword, count=count)
@@ -220,6 +222,10 @@ def main():
     st.text("Please note that the polarity is calculated using the TextBlob Python library")
     st.text("Get the details: https://textblob.readthedocs.io/")
     st.altair_chart(polarity_chart)
+
+    time_end = time.time()
+    time_elapsed = time_end - time_start
+    st.write("Time Elapsed:", time_elapsed, " seconds")
 
     #Word Cloud
     #wordcloud = WordCloud().generate(" ".join(wordcloud_list))
