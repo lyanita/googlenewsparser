@@ -15,7 +15,7 @@ import datetime
 import pytz
 import base64
 import google
-from googlesearch import search
+import googlesearch
 import altair as alt
 import streamlit as st
 
@@ -136,7 +136,7 @@ class GoogleSearchClient(object):
 
     def get_search(self):
         search_results = []
-        for i in search(self._query, tld='com', lang='en', num=10, start=0, stop=None, pause=2):
+        for i in googlesearch.search(self._query, tld='com', lang='en', num=10, start=0, stop=None, pause=2):
             search_results.append(i)
         return search_results
 
