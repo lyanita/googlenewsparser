@@ -14,6 +14,7 @@ import time
 import datetime
 import pytz
 import base64
+import google
 from googlesearch import search
 import altair as alt
 import streamlit as st
