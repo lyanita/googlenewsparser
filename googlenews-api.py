@@ -14,6 +14,7 @@ import time
 import datetime
 import pytz
 import base64
+from googlesearch import search
 import altair as alt
 import streamlit as st
 
@@ -27,7 +28,8 @@ nltk.download('punkt')
 #streamlit run googlenews-api.py
 
 #Config Setup for Newspaper
-user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0) Gecko/20100101 Firefox/78.0'
+user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+#'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0) Gecko/20100101 Firefox/78.0'
 #'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
 #headers = {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0) Gecko/20100101 Firefox/78.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'}
 config = Config()
@@ -59,8 +61,8 @@ class GoogleNewsClient(object):
                 article.download()
                 article.parse()
                 article.nlp()
-                dict['Reporting Date'] = news['date'][ind]
-                dict['Publish Date'] = article.publish_date
+                #dict['Reporting Date'] = news['date'][ind]
+                #dict['Publish Date'] = article.publish_date
                 local_time = pytz.timezone("US/Eastern")
                 if article.publish_date is None:
                     try:
@@ -104,7 +106,8 @@ class GoogleNewsClient(object):
             except:
                 continue
         news_df = pd.DataFrame(list)
-        news_df["Keywords"] = news_df["Keywords"].str.join(',')
+        #news_df["Keywords"] = news_df["Keywords"].str.join(',')
+        news_df["Keywords"] = news_df["Keywords"].apply(lambda x: ','.join(map(str, x)))
         return news_df
 
     def get_sentiment(self, news_df):
@@ -125,6 +128,16 @@ class GoogleNewsClient(object):
         news_df["Sentiment"] = sentiment
         news_df["Polarity"] = polarity
         return news_df
+
+class GoogleSearchClient(object):
+    def __init__(self, query):
+        self._query = query
+
+    def get_search(self):
+        search_results = []
+        for i in search(self._query, tld='com', lang='en', num=10, start=0, stop=None, pause=2):
+            search_results.append(i)
+        return search_results
 
 def main():
     #User Inputs
@@ -156,8 +169,8 @@ def main():
 
     #Streamlit Setup
     st.title('Google News Parser Web App')
-    st.subheader("Interested in scraping data from Google News? Use the parameters in the sidebar to continue!")
-    st.text("Google News Data")
+    st.header("Interested in scraping data from Google News? Use the parameters in the sidebar to continue!")
+    st.subheader("Google News Data")
 
     st.dataframe(articles)
     news_count = len(news.index)
@@ -189,8 +202,8 @@ def main():
     unique_words_df = unique_words_df.sort_values(by=["Count"], ascending=False)
     unique_words_df["Percent"] = unique_words_df["Count"]/word_count
     unique_words_df["Percent"] = unique_words_df["Percent"].astype(float).map("{:.2%}".format)
-    st.text("Keyword Count Data")
-    words_chart = alt.Chart(unique_words_df).mark_bar().encode(x=alt.X("Word", sort="-y"), y=alt.Y("Count"), tooltip=["Word", "Count", "Percent"]).transform_window(rank='rank(Count)', sort=[alt.SortField("Count", order="descending")]).transform_filter((alt.datum.rank < 10)).properties(width=600, height=300).interactive()
+    st.subheader("Keyword Count Data")
+    words_chart = alt.Chart(unique_words_df).mark_bar().encode(x=alt.X("Word:N", sort="-y"), y=alt.Y("Count:Q"), tooltip=["Word", "Count", "Percent"]).transform_window(rank='rank(Count)', sort=[alt.SortField("Count", order="descending")]).transform_filter((alt.datum.rank < 10)).properties(width=600, height=300)
 
     col1, col2 = st.beta_columns([4,3])
     with col1:
@@ -202,7 +215,9 @@ def main():
     polarity = alt.Chart(articles).mark_line(point=True).encode(x=alt.X("Date"), y=alt.Y("Polarity"), tooltip=['Date', 'Polarity', 'Media']).interactive()
     rule = alt.Chart(articles).mark_rule(color="red").encode(y="mean(Polarity)", tooltip=["mean(Polarity)"])
     polarity_chart = (polarity + rule).properties(width=700, height=300)
-    st.text("Polarity Data")
+    st.subheader("Polarity Data")
+    st.text("Please note that the polarity is calculated using the TextBlob Python library")
+    st.text("Get the details: https://textblob.readthedocs.io/")
     st.altair_chart(polarity_chart)
 
     #Word Cloud
