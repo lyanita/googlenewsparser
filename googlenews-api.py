@@ -3,6 +3,7 @@
 #Description: This program uses the GoogleNews module to obtain weblinks given paramters provided by the user and uses the Article module to parse and retrieve web content; the output is visualized on Streamlit
 
 #Import Packages and Modules
+import streamlit as st
 from newspaper import Article
 from newspaper import Config
 from GoogleNews import GoogleNews
@@ -17,7 +18,6 @@ import base64
 import google
 #import googlesearch
 import altair as alt
-import streamlit as st
 
 #Download the punkt dataset from nltk
 nltk.download('punkt')
