@@ -4,7 +4,6 @@
 
 #Import Packages and Modules
 import pandas as pd
-import nltk
 from textblob import TextBlob
 import matplotlib.pyplot as plt
 import time
