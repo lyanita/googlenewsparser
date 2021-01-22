@@ -3,9 +3,9 @@
 #Description: This program uses the GoogleNews module to obtain weblinks given paramters provided by the user and uses the Article module to parse and retrieve web content; the output is visualized on Streamlit
 
 #Import Packages and Modules
-from GoogleNews import GoogleNews
 from newspaper import Article
 from newspaper import Config
+from GoogleNews import GoogleNews
 import pandas as pd
 import nltk
 from textblob import TextBlob
