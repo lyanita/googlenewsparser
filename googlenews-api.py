@@ -12,7 +12,6 @@ import datetime
 import pytz
 import base64
 import google
-#import googlesearch
 import altair as alt
 from newspaper import Article
 from newspaper import Config
