@@ -8,3 +8,4 @@ textblob==0.15.3
 streamlit==0.75.0
 GoogleNews==1.5.2
 protobuf==3.14.0
+click==8.0.4
